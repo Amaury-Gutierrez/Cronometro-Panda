@@ -112,7 +112,7 @@
       width: 520px;     
       min-height: 320px; 
       backdrop-filter: blur(2px);
-      margin-bottom: 120px; /* Espacio para que el panda de abajo no tape los botones */
+      /* Se eliminó el margin-bottom para que el cronómetro quede perfectamente centrado siempre */
     }
 
     h1 {
@@ -155,35 +155,26 @@
       transition: 0.3s;
     }
 
-    #play {
-      background-color: #4caf50; /* Verde bambú */
-      color: white;
-    }
-
-    #detener {
-      background-color: #d32f2f; /* Rojo oscuro para contraste */
-      color: white;
-    }
-
-    #reiniciar {
-      background-color: #607d8b; /* Gris oscuro */
-      color: white;
-    }
+    #play { background-color: #4caf50; color: white; }
+    #detener { background-color: #d32f2f; color: white; }
+    #reiniciar { background-color: #607d8b; color: white; }
 
     button:hover {
       transform: scale(1.08);
       opacity: 0.9;
     }
 
-    /* --- Contenedor del Panda Principal e Interactivo --- */
+    /* --- Contenedor del Panda Principal --- */
+    /* Ahora es independiente del cronómetro y se ancla al fondo (pasto) */
     .contenedor-panda-central {
-      position: absolute;
-      bottom: -325px; /* Posicionado abajo y al centro del contenedor */
+      position: fixed; 
+      bottom: 0px; /* Ligeramente hundido en el pasto inferior */
       left: 50%;
       transform: translateX(-50%);
-      width: 300px;
-      height: 300px;
+      width: 320px; /* Puedes cambiar este valor y el bambú se auto-ajustará */
+      height: auto;
       z-index: 3;
+      pointer-events: none; /* Evita que el panda estorbe si das click en esa zona */
     }
 
     .panda-principal {
@@ -192,19 +183,17 @@
       display: block;
     }
 
-    /* Imagen del Bambú sobre la boca del panda */
+    /* Imagen del Bambú ahora usa porcentajes para no desfasarse */
     .bamboo-comida {
       position: absolute;
-      top: 25%; /* Alineado aproximadamente a la altura de la boca */
-      left: 35%;
-      width: 120px;
+      top: 32%; /* Altura relativa a la imagen del panda */
+      left: 32%; /* Posición lateral relativa a la imagen del panda */
+      width: 40%; /* Ancho relativo para que escale con el panda */
       height: auto;
       opacity: 0;
-      pointer-events: none;
       transition: opacity 0.3s ease;
     }
 
-    /* Clase activa para activar la animación de masticar */
     .bamboo-comida.comiendo {
       opacity: 1;
       animation: masticar 0.4s infinite alternate;
@@ -234,11 +223,11 @@
       <button id="detener">⏸️ Detener</button>
       <button id="reiniciar">🔄 Reiniciar</button>
     </div>
+  </div>
 
-    <div class="contenedor-panda-central">
-      <img id="panda-avatar" class="panda-principal" src="images/panda_dormido.png" alt="Panda Central">
-      <img id="bamboo-avatar" class="bamboo-comida" src="images/bamboo.png" alt="Bambú">
-    </div>
+  <div class="contenedor-panda-central">
+    <img id="panda-avatar" class="panda-principal" src="images/panda_dormido.png" alt="Panda Central">
+    <img id="bamboo-avatar" class="bamboo-comida" src="images/bamboo.png" alt="Bambú">
   </div>
 
 <script>
@@ -283,17 +272,16 @@
       transcurrido >= siguiente_panda_ms
     ) {
       crear_panda();
-      animar_comer_bamboo(); // Activa la animación del bambú cada minuto
+      animar_comer_bamboo();
       siguiente_panda_ms += tiempo_entre_pandas;
     }
   }
 
-  // Función para manejar la acción de comer bambú por 5 segundos
   function animar_comer_bamboo() {
     bamboo_avatar.classList.add("comiendo");
     setTimeout(() => {
       bamboo_avatar.classList.remove("comiendo");
-    }, 5000); // 5000 milisegundos = 5 segundos comiendo
+    }, 5000); 
   }
 
   function actualizar_cronometro() {
@@ -325,7 +313,6 @@
       intervalo = setInterval(actualizar_cronometro, 10);
       iniciar_pandas();
       
-      // Cambia a estado sentado (activo) al dar Play
       panda_avatar.src = "images/panda_sentado.png";
     }
   }
@@ -337,7 +324,6 @@
       intervalo = null;
       detener_pandas();
 
-      // Cambia a estado dormido si se pausa
       panda_avatar.src = "images/panda_dormido.png";
     }
   }
@@ -351,7 +337,6 @@
     mostrar_tiempo(0);
     reiniciar_pandas();
 
-    // Vuelve al estado inicial dormido
     panda_avatar.src = "images/panda_dormido.png";
     bamboo_avatar.classList.remove("comiendo");
   }
@@ -387,28 +372,22 @@
 
   function activar_arrastre_panda(datos) {
     const panda = datos.elemento;
-
     let offsetX = 0;
     let offsetY = 0;
 
     panda.addEventListener("pointerdown", (e) => {
       datos.arrastrando = true;
       const rect = panda.getBoundingClientRect();
-
       offsetX = e.clientX - rect.left;
       offsetY = e.clientY - rect.top;
-
       panda.setPointerCapture(e.pointerId);
     });
 
     panda.addEventListener("pointermove", (e) => {
       if (!datos.arrastrando) return;
-
       const rect_suelo = suelo_pandas.getBoundingClientRect();
-
       datos.x = e.clientX - rect_suelo.left - offsetX;
       datos.y = e.clientY - rect_suelo.top - offsetY;
-
       limitar_panda_al_suelo(datos);
       actualizar_posicion_panda(datos);
     });
@@ -428,7 +407,6 @@
     const size = datos.elemento.offsetWidth || 42;
     const ancho = suelo_pandas.clientWidth;
     const alto = suelo_pandas.clientHeight;
-
     datos.x = Math.max(0, Math.min(ancho - size, datos.x));
     datos.y = Math.max(0, Math.min(alto - size, datos.y));
   }
@@ -454,7 +432,6 @@
       if (datos.x <= 0 || datos.x >= ancho - size) {
         datos.dx *= -1;
       }
-
       if (datos.y <= 0 || datos.y >= alto - size) {
         datos.dy *= -1;
       }
@@ -473,25 +450,21 @@
 
   function iniciar_pandas() {
     if (pandas_activos) return;
-
     pandas_activos = true;
     mover_pandas();
   }
 
   function detener_pandas() {
     pandas_activos = false;
-
     cancelAnimationFrame(animacion_pandas);
     animacion_pandas = null;
   }
 
   function reiniciar_pandas() {
     detener_pandas();
-
     pandas_array.forEach(datos => {
       datos.elemento.remove();
     });
-
     pandas_array = [];
     siguiente_panda_ms = tiempo_entre_pandas;
   }
